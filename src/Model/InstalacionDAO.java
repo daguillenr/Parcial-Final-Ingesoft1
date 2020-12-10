@@ -1,0 +1,108 @@
+
+package Model;
+
+import java.util.ArrayList;
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.NonUniqueResultException;
+import javax.persistence.Persistence;
+import javax.persistence.Query;
+
+
+/**
+ *
+ * @author User
+ */
+public class InstalacionDAO {
+    private static EntityManagerFactory emf = Persistence.createEntityManagerFactory("PersistenceParcial");
+
+    public static boolean insertar(Instalacion instalacion) {
+        EntityManager em = emf.createEntityManager();
+        em.getTransaction().begin();
+        try {
+            em.persist(instalacion);
+            em.getTransaction().commit();
+        } catch (Exception e) {
+            e.printStackTrace();
+            em.getTransaction().rollback();
+        } finally {
+            em.close();
+            return true;
+        }
+    }
+
+    public static boolean eliminar(Instalacion instalacion) {
+        EntityManager em = emf.createEntityManager();
+        em.getTransaction().begin();
+        boolean done = false;
+        try {
+            em.remove(instalacion);
+        } catch (Exception e) {
+            e.printStackTrace();
+            em.getTransaction().rollback();
+        } finally {
+            em.close();
+            return done;
+        }
+    }
+
+    public static Instalacion buscarInstalacion(int id_i) {
+        EntityManager em = emf.createEntityManager();
+        Instalacion res = null;
+        Query q = em.createQuery("SELECT i FROM Instalacion i " + "WHERE i.id_instalacion = :id").setParameter("id",
+                id_i);
+
+        try {
+            res = (Instalacion) q.getSingleResult();
+        } catch (NonUniqueResultException e) {
+            res = (Instalacion) q.getResultList().get(0);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            em.close();
+            return res;
+        }
+    }
+
+    public static Instalacion leerSingle(Instalacion instalacion) {
+        EntityManager em = emf.createEntityManager();
+        Instalacion res = null;
+        Query q = em
+                .createQuery("SELECT t FROM Instalacion t " + "WHERE  t.id_toma LIKE :id_instalacion"
+                        + " AND t.id_instalacion LIKE :id_sensor")
+                .setParameter("id_instalacion", instalacion.getId_instalacion())
+                .setParameter("id_sensor", instalacion.getId_sensor());
+
+        try {
+            res = (Instalacion) q.getSingleResult();
+        } catch (NonUniqueResultException e) {
+            res = (Instalacion) q.getResultList().get(0);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            em.close();
+            return res;
+        }
+    }
+
+    public static boolean actualizar(Instalacion s, Instalacion new_s) {
+        EntityManager em = emf.createEntityManager();
+        em.getTransaction().begin();
+        boolean done = false;
+
+        try {
+            s = leerSingle(s);
+            s = (Instalacion) new_s.clone();
+            em.merge(s);
+            em.getTransaction().commit();
+            done = true;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            em.getTransaction().rollback();
+        } finally {
+            em.close();
+            return done;
+        }
+    }
+}
